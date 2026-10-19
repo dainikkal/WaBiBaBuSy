@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using WaBiBaBuSy.Core.Interfaces;
 using WaBiBaBuSy.Core.Services;
 using WaBiBaBuSy.Core.Services.Logging;
+using WaBiBaBuSy.Common.Diagnostics;
 using WaBiBaBuSy.Models;
 using WaBiBaBuSy.Models.Configuration;
 using WaBiBaBuSy.Models.Networking;
@@ -145,6 +146,13 @@ public partial class MainWindowViewModel : ViewModelBase, IRoomHost
 
     [ObservableProperty]
     private bool _isUpdateInProgress;
+
+    /// <summary>Smart App Control is On (or in Evaluation) on this machine and may block our unsigned players/DLLs.</summary>
+    [ObservableProperty]
+    private bool _isAppControlWarningVisible = AppControlDiagnostics.MayBlockUnsignedCode;
+
+    public string AppControlWarningText =>
+        $"{AppControlDiagnostics.StatusLine()}. Unsigned WaBiBaBuSy files (players, DLLs) may be blocked. {AppControlDiagnostics.HowToFix}";
 
     // Debug overlay per-flag controls (defaults match player defaults)
     [ObservableProperty]
@@ -1568,6 +1576,9 @@ public partial class MainWindowViewModel : ViewModelBase, IRoomHost
             IsUpdateInProgress = false;
         }
     }
+
+    [RelayCommand]
+    private void DismissAppControlWarning() => IsAppControlWarningVisible = false;
 
     [RelayCommand]
     private void DismissUpdate()

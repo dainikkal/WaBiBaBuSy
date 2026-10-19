@@ -106,6 +106,26 @@ Configuration lives in `%APPDATA%\WaBiBaBuSy\`; logs in `%LOCALAPPDATA%\WaBiBaBu
 
 ---
 
+## Troubleshooting
+
+**The app doesn't start at all (no window, no tray icon).** Windows Smart App Control (or a
+company-managed Application Control policy) blocks unsigned files, which includes a fresh build's
+Avalonia, Vortice and Magick DLLs. The app now says so in a message box and writes
+`%LOCALAPPDATA%\WaBiBaBuSy\Logs\startup.log`. To fix it: Windows Security → App & browser control →
+**Smart App Control settings → Off**. A warning bar in the control panel also appears when it is *On* or
+in *Evaluation* (Evaluation can switch itself On later).
+
+**Before a LAN party,** run the read-only pre-flight on every Windows machine:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check-machine.ps1
+```
+
+It reports the Smart App Control state, recent Windows blocks of WaBiBaBuSy files, startup crashes,
+missing .NET 9 runtimes, and whether port 50051 is free or already served.
+
+---
+
 ## Distribution modes
 
 | Mode | What happens | Use it when |

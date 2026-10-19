@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using WaBiBaBuSy.Common.Diagnostics;
 using WaBiBaBuSy.Core.Services.Testing;
 using WaBiBaBuSy.Models.Show;
 using WaBiBaBuSy.Models.Testing;
@@ -622,7 +623,11 @@ public class D2DPlayerHost : IDisposable
     {
         int code = -1;
         try { code = _playerProcess?.ExitCode ?? -1; } catch { /* disposed meanwhile */ }
-        _logger.LogWarning("Player process exited with code {ExitCode}", code);
+        if (AppControlDiagnostics.MayBlockUnsignedCode)
+            _logger.LogWarning("Player process exited with code {ExitCode} ({AppControl}; it may have blocked the player's DLLs)",
+                code, AppControlDiagnostics.StatusLine());
+        else
+            _logger.LogWarning("Player process exited with code {ExitCode}", code);
         _isInitialized = false;
         if (!_disposing) PlayerExitedUnexpectedly?.Invoke(this, EventArgs.Empty);
     }
@@ -637,6 +642,11 @@ public class D2DPlayerHost : IDisposable
         if (!string.IsNullOrEmpty(e.Data))
         {
             var line = e.Data;
+
+            // An unhandled FileLoadException 0x800711C7 in the player = Windows Application Control blocked a DLL
+            if (AppControlDiagnostics.IsAppControlBlockMessage(line))
+                _logger.LogError("[Player] Windows Application Control blocked a player file ({AppControl}): {Line}. {Fix}",
+                    AppControlDiagnostics.StatusLine(), line, AppControlDiagnostics.HowToFix);
 
             // Control signals from the player (raw, no log prefix). The player emits
             // these directly via Console.Error.WriteLine so they arrive ahead of any

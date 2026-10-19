@@ -154,8 +154,25 @@
             </Grid>
         </Border>
 
+        <StackPanel Grid.Row="1">
+        <!-- Smart App Control warning: it silently blocks unsigned builds and player DLLs -->
+        <Border Background="#5C3A1A" Padding="10,6"
+                IsVisible="{Binding IsAppControlWarningVisible}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="WARNING" Foreground="#FFB74D"
+                           FontSize="11" FontWeight="Bold" VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+                <TextBlock Grid.Column="1" Text="{Binding AppControlWarningText}"
+                           Foreground="White" FontSize="11" VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
+                <Button Grid.Column="2" Content="Dismiss"
+                        Command="{Binding DismissAppControlWarningCommand}"
+                        Padding="8,3" FontSize="11" Margin="5,0,0,0"/>
+            </Grid>
+        </Border>
+
         <!-- Update Notification Bar -->
-        <Border Grid.Row="1" Background="#1A3A5C" Padding="10,6"
+        <Border Background="#1A3A5C" Padding="10,6"
                 IsVisible="{Binding IsUpdateAvailable}">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
                 <TextBlock Grid.Column="0" Text="UPDATE" Foreground="#4FC3F7"
@@ -178,6 +195,7 @@
                         IsEnabled="{Binding !IsUpdateInProgress}"/>
             </Grid>
         </Border>
+        </StackPanel>
 
         <!-- Main Split View: Client Graph (Left) | Wallpaper Gallery (Right) -->
         <Grid Grid.Row="2" Name="MainSplit" ColumnDefinitions="*,6,650">

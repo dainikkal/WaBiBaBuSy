@@ -172,7 +172,10 @@ public class WaBiBaBuSyService : IDisposable
 
         try
         {
-            _logger.LogInformation("Starting WaBiBaBuSy in server mode");
+            _logger.LogInformation("Starting WaBiBaBuSy in server mode ({AppControl})", WaBiBaBuSy.Common.Diagnostics.AppControlDiagnostics.StatusLine());
+            if (WaBiBaBuSy.Common.Diagnostics.AppControlDiagnostics.MayBlockUnsignedCode)
+                _logger.LogWarning("Smart App Control may block the unsigned player/DLLs on this machine. {Fix}",
+                    WaBiBaBuSy.Common.Diagnostics.AppControlDiagnostics.HowToFix);
 
             // Create mDNS service if auto-discovery is enabled
             if (_serverConfig.EnableAutoDiscovery)

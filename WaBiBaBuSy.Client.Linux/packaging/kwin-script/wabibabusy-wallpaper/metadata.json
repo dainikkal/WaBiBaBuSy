@@ -1,0 +1,15 @@
+{
+  "KPlugin": {
+    "Id": "wabibabusy-wallpaper",
+    "Name": "WaBiBaBuSy Wallpaper",
+    "Description": "Keeps the WaBiBaBuSy Linux client's wallpaper above Plasma's own desktop after a click on the desktop (needed under Wayland).",
+    "Version": "1.0",
+    "License": "MIT",
+    "Authors": [{ "Name": "BiBaBu" }],
+    "Website": "https://github.com/dainikkal/WaBiBaBuSy",
+    "EnabledByDefault": true
+  },
+  "X-Plasma-API": "javascript",
+  "X-Plasma-MainScript": "code/main.js",
+  "KPackageStructure": "KWin/Script"
+}

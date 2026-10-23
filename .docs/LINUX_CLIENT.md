@@ -42,6 +42,7 @@ The client needs X11 libraries. They are present on any desktop install; on mini
 |--------|---------|
 | Fedora | `sudo dnf install libX11 libXrandr libXext libICE libSM fontconfig` |
 | Ubuntu/Debian | `sudo apt install libx11-6 libxrandr2 libxext6 libice6 libsm6 libfontconfig1` |
+| Arch/Manjaro | `sudo pacman -S --needed libx11 libxrandr libxext libice libsm fontconfig` |
 
 On Wayland sessions the client runs through **XWayland**, which GNOME and KDE enable by default.
 
@@ -143,6 +144,39 @@ Windows server ──gRPC──► WaBiBaBuSy.Core (net9.0 build)      same netw
 
 Fallback for KDE without code changes: *System Settings → Window Management → Window Rules*, add a rule
 for window class `wabibabusy-wallpaper`, and set *Window type: Desktop* (Force).
+
+---
+
+## Troubleshooting
+
+The release notes (`.github/linux-release-notes.md`) carry the same list for people who only see the download page.
+
+| Symptom | Fix |
+|---------|-----|
+| `Permission denied` when starting the installer or the client | Start it with `bash …/packaging/install.sh`. The installer fixes the file modes itself (some archive tools drop them). |
+| `install.sh` warns about missing libraries, or the client fails with `Unable to load shared library 'libX11.so.6'` | Install the [packages](#packages) for your distro (dnf / apt / pacman) |
+| `Cannot open X display` | Wayland session without XWayland: enable it, or log in to the X11 session. `echo $DISPLAY` must not be empty. |
+| Server not found | Allow mDNS (see [Network](#network)) or start with `--server <server-ip>` |
+| KDE: wallpaper disappears after a click on the desktop | Run `install.sh` again; it installs the KWin script on Plasma 6. Check with `kpackagetool6 --type KWin/Script --list \| grep wabibabusy`. |
+| GNOME: wallpaper not behind windows | `install.sh --gnome-extension`, log out and back in |
+| Other desktops: wallpaper above windows or not visible | `--placement below` |
+| Black or garbled wallpaper | `--software` (CPU rendering) |
+| Doesn't pause during a game | Native Wayland games aren't detected (XWayland ones are); the log shows `Fullscreen monitors: [...]` when it works |
+| Out of sync with the Windows screens | `timedatectl` must show *System clock synchronized: yes* |
+| Video layers missing | Not supported yet (see below) |
+
+To find out which session you are in: `echo $XDG_SESSION_TYPE` (`wayland` or `x11`), `echo $XDG_CURRENT_DESKTOP`, and
+`plasmashell --version` on KDE.
+
+**Logs.** The autostarted client logs nowhere. To see what it does, stop it and run it in a terminal:
+
+```bash
+pkill -x wabibabusy-clie
+wabibabusy-client --verbose --log-dir ~/wabibabusy-logs
+```
+
+Client settings (e.g. `PauseOnFullscreen`) live in `~/.config/WaBiBaBuSy/client-config.json`; restart the client after
+editing it.
 
 ---
 

@@ -42,6 +42,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4   # the release notes file
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -55,14 +57,5 @@ jobs:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           target_commitish: ${{ github.sha }}
           name: Linux client ${{ github.event.inputs.tag || github.ref_name }}
-          body: |
-            Self-contained WaBiBaBuSy Linux client (no .NET install needed). Pick the tarball for your CPU.
-
-            ```bash
-            tar xzf wabibabusy-client-linux-x64.tar.gz
-            bash wabibabusy-client-linux-x64/packaging/install.sh          # add --args "--server 192.168.1.10" to skip discovery
-            wabibabusy-client --demo                                        # check placement without a server, Ctrl+C to quit
-            ```
-
-            Needs X11 libraries (present on any desktop install). See `.docs/LINUX_CLIENT.md` for packages, network and desktop notes.
+          body_path: .github/linux-release-notes.md
           files: dist/*

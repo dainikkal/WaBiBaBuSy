@@ -51,20 +51,23 @@ if [[ $UNINSTALL -eq 1 ]]; then
     exit 0
 fi
 
-if [[ ! -x "$SRC/wabibabusy-client" ]]; then
+if [[ ! -f "$SRC/wabibabusy-client" ]]; then
     echo "wabibabusy-client not found next to packaging/ — run this from the published folder." >&2
     exit 1
 fi
 
 # ── Native libraries the client loads at runtime ──
 missing=()
+LDCONFIG="$(command -v ldconfig || echo /sbin/ldconfig)"   # Debian keeps it in /sbin, outside a user's PATH
+libs="$("$LDCONFIG" -p 2>/dev/null || true)"
 for lib in libX11.so.6 libXrandr.so.2 libXext.so.6 libICE.so.6 libSM.so.6 libfontconfig.so.1; do
-    ldconfig -p 2>/dev/null | grep -q "$lib" || missing+=("$lib")
+    grep -qF "$lib" <<<"$libs" || missing+=("$lib")
 done
 if [[ ${#missing[@]} -gt 0 ]]; then
     echo "WARNING: missing libraries: ${missing[*]}"
     echo "  Fedora:        sudo dnf install libX11 libXrandr libXext libICE libSM fontconfig"
     echo "  Ubuntu/Debian: sudo apt install libx11-6 libxrandr2 libxext6 libice6 libsm6 libfontconfig1"
+    echo "  Arch/Manjaro:  sudo pacman -S --needed libx11 libxrandr libxext libice libsm fontconfig"
 fi
 
 # ── Copy the program ──
@@ -73,7 +76,10 @@ if [[ "$SRC" != "$DEST" ]]; then
     mkdir -p "$DEST"
     cp -a "$SRC/." "$DEST/"
 fi
-chmod +x "$DEST/wabibabusy-client"
+# Fix file modes (tarballs packed on Windows or unpacked by some GUI archivers lose them)
+chmod -R u+rwX,go+rX,go-w "$DEST"
+chmod 755 "$DEST/wabibabusy-client" "$DEST/packaging/install.sh"
+find "$DEST" -type f -name '*.so' -exec chmod 755 {} +
 mkdir -p "$(dirname "$BIN_LINK")"
 ln -sf "$DEST/wabibabusy-client" "$BIN_LINK"
 echo "Installed to $DEST (command: wabibabusy-client)"

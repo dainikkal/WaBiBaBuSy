@@ -122,7 +122,9 @@ Windows server ──gRPC──► WaBiBaBuSy.Core (net9.0 build)      same netw
   sticky, skip-taskbar and skip-pager, and an empty XShape input region so clicks reach the desktop and apps
   below. In desktop mode it is *raised within the desktop layer* and re-raised every 0.5 s if another
   desktop-type window ends up above it. Without that, KDE's plasmashell desktop, which is itself a
-  desktop-type window, would cover the wallpaper.
+  desktop-type window, would cover the wallpaper after every click on the desktop. Under Wayland that re-raise
+  cannot see plasmashell (a native Wayland window), so on KDE `install.sh` also installs a KWin script
+  (`packaging/kwin-script`) that does the same from inside KWin. That keeps BiBaBo's bomb seat visible and clickable.
 - **Pause on fullscreen.** Every 2 s it checks which monitors a fullscreen window covers. By default any fullscreen app
   pauses every monitor; with `PauseOnlyFullscreenMonitor` in the client config only the covered one pauses
   (`PauseOnFullscreen` turns it off). Time keeps running, so playback resumes in sync. Only X11/XWayland
@@ -135,7 +137,7 @@ Windows server ──gRPC──► WaBiBaBuSy.Core (net9.0 build)      same netw
 
 | Desktop | Expected behaviour |
 |---------|--------------------|
-| KDE Plasma (X11 or Wayland) | Wallpaper sits above Plasma's own wallpaper, below all apps. Desktop icons are covered visually but stay clickable. |
+| KDE Plasma (X11 or Wayland) | Wallpaper sits above Plasma's own wallpaper, below all apps. Desktop icons are covered visually but stay clickable. `install.sh` installs the KWin script automatically on KDE (Plasma 6; force it with `--kwin-script`); without it a desktop click under Wayland hides the wallpaper until the client restarts. |
 | GNOME (X11 or Wayland) | Wallpaper sits in Mutter's desktop layer, below all apps. If it does not stay behind windows, install the fallback extension: `install.sh --gnome-extension`, log out and back in. |
 | Other X11 WMs (Xfce, Cinnamon, i3…) | Most honour `_NET_WM_WINDOW_TYPE_DESKTOP`; try `--placement below` if not. |
 

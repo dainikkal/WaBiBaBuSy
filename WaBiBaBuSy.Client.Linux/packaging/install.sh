@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Install the WaBiBaBuSy Linux client for the current user (no root needed).
 #
-#   ./packaging/install.sh [--args "<client options>"] [--no-autostart] [--gnome-extension]
+#   ./packaging/install.sh [--args "<client options>"] [--no-autostart] [--gnome-extension] [--kwin-script]
 #   ./packaging/install.sh --uninstall
 #
 # Run it from inside the published folder (dotnet publish ... -o <folder>).
+# On KDE Plasma the KWin script that keeps the wallpaper above Plasma's desktop is installed automatically.
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -13,10 +14,13 @@ BIN_LINK="$HOME/.local/bin/wabibabusy-client"
 AUTOSTART="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/wabibabusy-client.desktop"
 EXT_UUID="wabibabusy-wallpaper@bibabu"
 EXT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions/$EXT_UUID"
+KWIN_SCRIPT="wabibabusy-wallpaper"
 
 CLIENT_ARGS=""
 AUTOSTART_ENABLED=1
 GNOME_EXT=0
+KWIN=0
+[[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]] && KWIN=1
 UNINSTALL=0
 
 while [[ $# -gt 0 ]]; do
@@ -24,8 +28,9 @@ while [[ $# -gt 0 ]]; do
         --args) CLIENT_ARGS="$2"; shift 2 ;;
         --no-autostart) AUTOSTART_ENABLED=0; shift ;;
         --gnome-extension) GNOME_EXT=1; shift ;;
+        --kwin-script) KWIN=1; shift ;;
         --uninstall) UNINSTALL=1; shift ;;
-        -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -36,6 +41,11 @@ if [[ $UNINSTALL -eq 1 ]]; then
     if [[ -d "$EXT_DIR" ]]; then
         gnome-extensions disable "$EXT_UUID" 2>/dev/null || true
         rm -rf "$EXT_DIR"
+    fi
+    if command -v kpackagetool6 >/dev/null && kpackagetool6 --type KWin/Script --show "$KWIN_SCRIPT" >/dev/null 2>&1; then
+        kwriteconfig6 --file kwinrc --group Plugins --key "${KWIN_SCRIPT}Enabled" --delete 2>/dev/null || true
+        kpackagetool6 --type KWin/Script --remove "$KWIN_SCRIPT" >/dev/null 2>&1 || true
+        dbus-send --session --type=method_call --dest=org.kde.KWin /KWin org.kde.KWin.reconfigure 2>/dev/null || true
     fi
     echo "WaBiBaBuSy client removed."
     exit 0
@@ -91,6 +101,22 @@ if [[ $GNOME_EXT -eq 1 ]]; then
     gnome-extensions enable "$EXT_UUID" 2>/dev/null \
         && echo "GNOME extension enabled." \
         || echo "GNOME extension copied — log out and back in, then run: gnome-extensions enable $EXT_UUID"
+fi
+
+# ── KDE Plasma: KWin script keeping the wallpaper above plasmashell's desktop (a desktop click raises that over it) ──
+if [[ $KWIN -eq 1 ]]; then
+    if command -v kpackagetool6 >/dev/null; then
+        pkg="$DEST/packaging/kwin-script/$KWIN_SCRIPT"
+        kpackagetool6 --type KWin/Script --upgrade "$pkg" >/dev/null 2>&1 \
+            || kpackagetool6 --type KWin/Script --install "$pkg" >/dev/null
+        kwriteconfig6 --file kwinrc --group Plugins --key "${KWIN_SCRIPT}Enabled" true
+        dbus-send --session --type=method_call --dest=org.kde.KWin /KWin org.kde.KWin.reconfigure 2>/dev/null \
+            && echo "KWin script enabled." \
+            || echo "KWin script installed — log out and back in to load it."
+    else
+        echo "WARNING: kpackagetool6 not found (Plasma 6 needed) — KWin script not installed;"
+        echo "  a click on the desktop can hide the wallpaper under Wayland until the client restarts."
+    fi
 fi
 
 cat <<EOF
